@@ -1,0 +1,13 @@
+{
+	"name": "Kamaji",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "rust",
+	"workspaceFolder": "/workspaces/kamaji",
+	"extensions": [
+		"vadimcn.vscode-lldb",
+		"serayuzgur.crates",
+		"tamasfe.even-better-toml",
+		"mutantdino.resourcemonitor",
+		"rust-lang.rust-analyzer"
+	]
+}
