@@ -8,14 +8,9 @@ use crate::AppState;
 async fn get_client_id(State(state): State<AppState>) -> Result<String, StatusCode> {
     use crate::schema::config::dsl::*;
 
-    let pool = &mut state.db_pool.get().await;
-    let conn = match pool {
-        Ok(conn) => conn,
-        Err(_error) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
-    };
-
-    let result = conn
-        .interact(|conn| {
+    let result = state
+        .database
+        .query(|conn| {
             config
                 .filter(name.eq("client_id"))
                 .get_result::<Config>(conn)
@@ -23,11 +18,8 @@ async fn get_client_id(State(state): State<AppState>) -> Result<String, StatusCo
         .await;
 
     match result {
-        Ok(result) => match result {
-            Ok(result) => Ok(result.value),
-            Err(_error) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        },
-        Err(_error) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Ok(result) => Ok(result.value),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
 

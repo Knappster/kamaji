@@ -1,20 +1,17 @@
+mod database;
 mod models;
 mod routes;
 mod schema;
+mod state;
 
 use axum::Router;
-use deadpool_diesel::mysql::{Manager, Pool, Runtime};
 use dotenvy::dotenv;
+use state::AppState;
 use std::env;
 use std::net::IpAddr;
 use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-#[derive(Clone)]
-pub struct AppState {
-    db_pool: Pool,
-}
 
 #[tokio::main]
 async fn main() {
@@ -37,16 +34,10 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Configure database connection.
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let manager = Manager::new(database_url, Runtime::Tokio1);
-    let db_pool = Pool::builder(manager)
-        .max_size(8)
-        .build()
-        .expect("Could not build database connection pool.");
-
     // Configure app state.
-    let state = AppState { db_pool };
+    let state = AppState {
+        ..Default::default()
+    };
 
     // Configure routing and start listening for connections.
     let port: u16 = env::var("PORT")
