@@ -20,12 +20,13 @@ async fn get_client_id(State(state): State<AppState>) -> Result<String, StatusCo
                 .get_result::<Config>(conn)
         })
         .await
-        .unwrap();
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map_err(|e| {
+            tracing::error!("Error getting client ID: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
-    match result {
-        Ok(result) => Ok(result.value),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    Ok(result.value)
 }
 
 pub fn get_router(state: AppState) -> Router {
