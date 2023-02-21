@@ -8,10 +8,10 @@ use crate::AppState;
 async fn get_client_id(State(state): State<AppState>) -> Result<String, StatusCode> {
     use crate::schema::config::dsl::*;
 
-    let conn = match state.database.get_connection().await {
-        Ok(conn) => conn,
-        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
-    };
+    let conn = state.database.get_connection().await.map_err(|e| {
+        tracing::error!("Error getting database connection: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let result = conn
         .interact(|conn| {

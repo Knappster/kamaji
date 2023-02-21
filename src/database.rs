@@ -22,12 +22,7 @@ impl Database {
     }
 
     pub async fn get_connection(&self) -> Result<Object, PoolError> {
-        match self.0.get().await {
-            Ok(conn) => Ok(conn),
-            Err(e) => (|e| {
-                tracing::error!("{}", e);
-                Err(e)
-            })(e),
-        }
+        let conn = self.0.get().await?;
+        Ok(conn)
     }
 }
