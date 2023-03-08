@@ -1,11 +1,13 @@
+use anyhow::anyhow;
 use deadpool_diesel::{
     mysql::{Manager, Object, Pool, Runtime},
     PoolError,
 };
+use diesel::MysqlConnection;
 use std::env;
 
 #[derive(Clone)]
-pub struct Database(pub Pool);
+pub struct Database(Pool);
 
 impl Database {
     pub fn new() -> Self {
@@ -21,8 +23,23 @@ impl Database {
             .expect("Could not build database connection pool.")
     }
 
-    pub async fn get_connection(&self) -> Result<Object, PoolError> {
-        let conn = self.0.get().await?;
-        Ok(conn)
+    async fn get_connection(&self) -> Result<Object, PoolError> {
+        self.0.get().await
+    }
+
+    pub async fn query_database<F, R>(&self, query: F) -> Result<R, anyhow::Error>
+    where
+        F: FnOnce(&mut MysqlConnection) -> R + Send + 'static,
+        R: Send + 'static,
+    {
+        let conn = self.get_connection().await.map_err(|e| anyhow!(e))?;
+
+        let result = conn
+            .interact(query)
+            .await
+            .map_err(|e| anyhow!("Database interaction error: {:?}", e))
+            .map_err(|e| anyhow!(e))?;
+
+        Ok(result)
     }
 }
