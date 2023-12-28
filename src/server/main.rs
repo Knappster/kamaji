@@ -1,10 +1,6 @@
-mod database;
-mod models;
 mod routes;
-mod schema;
 mod state;
 
-use axum::Router;
 use dotenvy::dotenv;
 use state::AppState;
 use std::env;
@@ -18,14 +14,17 @@ async fn main() {
     // Configure environment variables.
     dotenv().ok();
 
+    /*
+    // Output all environment vars.
     #[cfg(debug_assertions)]
     {
         for (key, value) in env::vars() {
             println!("{}: {}", key, value);
         }
     }
+    */
 
-    // Configure console logging.
+    // Configure logging.
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -34,7 +33,7 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Configure app state.
+    // Create app state.
     let state = AppState {
         ..Default::default()
     };
@@ -48,13 +47,16 @@ async fn main() {
         .unwrap_or_else(|_| "0.0.0.0".to_string())
         .parse()
         .expect("IP address invalid.");
-    let router: Router = routes::get_router(state);
-    let addr: SocketAddr = SocketAddr::from((ip_addr, port));
+    let router = routes::get_routes(state);
+    let addr = SocketAddr::from((ip_addr, port));
 
     tracing::info!("listening on {}", addr);
 
-    axum::Server::bind(&addr)
-        .serve(router.layer(TraceLayer::new_for_http()).into_make_service())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    axum::serve(
+        listener,
+        router.layer(TraceLayer::new_for_http()).into_make_service(),
+    )
+    .await
+    .unwrap();
 }
