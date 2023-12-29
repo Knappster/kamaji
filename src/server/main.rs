@@ -40,7 +40,7 @@ async fn main() {
 
     // Configure routing and start listening for connections.
     let port: u16 = env::var("PORT")
-        .unwrap_or_else(|_| "25000".to_string())
+        .unwrap_or_else(|_| "80".to_string())
         .parse()
         .expect("Invalid port number.");
     let ip_addr: IpAddr = env::var("IP")
