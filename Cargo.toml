@@ -9,16 +9,19 @@ axum = "0.7.2"
 default-env = "0.1.1"
 dotenvy = "0.15.6"
 oauth2 = "4.3.0"
-tokio = { version = "1.24.1", features = ["full"] }
+tokio = { version = "1.24.1", features = ["macros"] }
 tower = { version = "0.4.13", features = ["util"] }
-tower-http = { version = "0.5.0", features = [
-    "fs",
-    "trace",
-    "compression-full",
-] }
+tower-http = { version = "0.5.0", features = ["fs", "trace", "compression-br"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 
 [[bin]]
 name = "kamaji"
 path = "./src/server/main.rs"
+
+[profile.release]
+strip = true
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
