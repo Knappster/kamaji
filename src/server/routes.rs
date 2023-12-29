@@ -11,10 +11,7 @@ pub fn get_routes(state: AppState) -> Router {
     let api_routes = Router::new().nest("/users", user_routes);
 
     let assets_dir = PathBuf::from(env::var("ASSETS_PATH").expect("Assets path env var missing!"));
-    let static_routes = Router::new().nest_service(
-        "/",
-        ServeDir::new(assets_dir).append_index_html_on_directories(true),
-    );
+    let static_routes = Router::new().nest_service("/", ServeDir::new(assets_dir));
 
     Router::new()
         .nest("/api", api_routes)
