@@ -5,7 +5,10 @@ edition = "2021"
 authors = ["Carl Knapp <hello@carlknapp.dev>"]
 
 [dependencies]
-axum = "0.7.2"
+axum = { version = "0.7.2", default-features = false, features = [
+	"tokio",
+	"http2",
+] }
 default-env = "0.1.1"
 dotenvy = "0.15.6"
 oauth2 = "4.3.0"

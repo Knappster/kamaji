@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  kamaji:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: knappster/kamaji
+    environment:
+      PORT: 80
+      CLIENT_ID: 
+      CLIENT_SECRET: 
+      DATABASE_URL: mysql://kamaji123:kamaji@db/kamaji
+      ASSETS_PATH: /public
+    ports:
+     - 80:80
