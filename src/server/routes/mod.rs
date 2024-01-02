@@ -3,7 +3,7 @@ use std::{env, path::PathBuf};
 use tower_http::compression::CompressionLayer;
 use tower_http::services::ServeDir;
 
-use crate::AppState;
+use crate::state::AppState;
 
 pub fn get_routes(state: AppState) -> Router {
     let user_routes = Router::new().route("/", get(|| async { "Users route!" }));

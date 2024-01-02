@@ -1,28 +1,21 @@
+mod database;
 mod routes;
 mod state;
 
 use dotenvy::dotenv;
-use state::AppState;
 use std::env;
 use std::net::IpAddr;
 use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_unwrap::ResultExt;
+
+use crate::state::AppState;
 
 #[tokio::main]
 async fn main() {
     // Configure environment variables.
     dotenv().ok();
-
-    /*
-    // Output all environment vars.
-    #[cfg(debug_assertions)]
-    {
-        for (key, value) in env::vars() {
-            println!("{}: {}", key, value);
-        }
-    }
-    */
 
     // Configure logging.
     tracing_subscriber::registry()
@@ -33,10 +26,14 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // Create database connection.
+    let db_pool = database::init_db_pool().await.unwrap_or_log();
+
+    // Run any migrations.
+    database::run_db_migrations(&db_pool).await.unwrap_or_log();
+
     // Create app state.
-    let state = AppState {
-        ..Default::default()
-    };
+    let state = AppState { database: db_pool };
 
     // Configure routing and start listening for connections.
     let port: u16 = env::var("PORT")
