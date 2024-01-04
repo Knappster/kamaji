@@ -6,9 +6,9 @@ use dotenvy::dotenv;
 use std::env;
 use std::net::IpAddr;
 use std::net::SocketAddr;
+use std::process::exit;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use tracing_unwrap::ResultExt;
 
 use crate::state::AppState;
 
@@ -27,23 +27,37 @@ async fn main() {
         .init();
 
     // Create database connection.
-    let db_pool = database::init_db_pool().await.unwrap_or_log();
+    let db_pool = database::init_db_pool().await.unwrap_or_else(|e| {
+        tracing::error!("{}", e);
+        exit(1)
+    });
 
     // Run any migrations.
-    database::run_db_migrations(&db_pool).await.unwrap_or_log();
+    database::run_db_migrations(&db_pool)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::error!("{}", e);
+            exit(1)
+        });
 
     // Create app state.
     let state = AppState { database: db_pool };
 
     // Configure routing and start listening for connections.
-    let port: u16 = env::var("PORT")
+    let port = env::var("PORT")
         .unwrap_or_else(|_| "80".to_string())
-        .parse()
-        .expect("Invalid port number.");
-    let ip_addr: IpAddr = env::var("IP")
+        .parse::<u16>()
+        .unwrap_or_else(|e| {
+            tracing::error!("Invalid port number: {}", e);
+            exit(1)
+        });
+    let ip_addr = env::var("IP")
         .unwrap_or_else(|_| "0.0.0.0".to_string())
-        .parse()
-        .expect("IP address invalid.");
+        .parse::<IpAddr>()
+        .unwrap_or_else(|e| {
+            tracing::error!("Invalid IP address: {}", e);
+            exit(1)
+        });
     let router = routes::get_routes(state);
     let addr = SocketAddr::from((ip_addr, port));
 
