@@ -1,6 +1,6 @@
-use sqlx::{Any, Pool};
+use sqlx::MySqlPool;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub database: Pool<Any>,
+    pub database: MySqlPool,
 }
