@@ -1,26 +1,23 @@
+use anyhow::{Context, Result};
 use sqlx::mysql::MySqlPoolOptions;
-use sqlx::{migrate::MigrateError, Error, MySqlPool};
+use sqlx::MySqlPool;
 use std::env::var;
-use std::process::exit;
-use tracing::{debug, instrument};
+use tracing::debug;
 
-#[instrument]
-pub async fn init_db_pool() -> Result<MySqlPool, Error> {
-    let database_url = var("DATABASE_URL").unwrap_or_else(|e| {
-        tracing::error!("DATABASE_URL: {}", e);
-        exit(1)
-    });
+pub async fn init_db_pool() -> Result<MySqlPool> {
+    let database_url =
+        var("DATABASE_URL").with_context(|| "DATABASE_URL environment variable missing")?;
 
     debug!(database_url);
 
-    MySqlPoolOptions::new()
+    Ok(MySqlPoolOptions::new()
         .max_connections(5)
         .connect(&database_url)
-        .await
+        .await?)
 }
 
-pub async fn run_db_migrations(db_pool: &MySqlPool) -> Result<(), MigrateError> {
-    sqlx::migrate!("src/server/database/migrations")
+pub async fn run_db_migrations(db_pool: &MySqlPool) -> Result<()> {
+    Ok(sqlx::migrate!("src/server/database/migrations")
         .run(db_pool)
-        .await
+        .await?)
 }

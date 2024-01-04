@@ -46,8 +46,8 @@ async fn main() {
 
     // Configure routing and start listening for connections.
     let port = env::var("PORT")
-        .unwrap_or_else(|e| {
-            debug!("PORT: {}", e);
+        .unwrap_or_else(|_| {
+            debug!("PORT environment variable missing");
             "80".to_string()
         })
         .parse::<u16>()
@@ -58,8 +58,8 @@ async fn main() {
     debug!(port);
 
     let ip_addr = env::var("IP")
-        .unwrap_or_else(|e| {
-            debug!("IP: {}", e);
+        .unwrap_or_else(|_| {
+            debug!("IP environment variable missing");
             "0.0.0.0".to_string()
         })
         .parse::<IpAddr>()
