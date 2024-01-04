@@ -8,6 +8,7 @@ use std::net::IpAddr;
 use std::net::SocketAddr;
 use std::process::exit;
 use tower_http::trace::TraceLayer;
+use tracing::{debug, error, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::state::AppState;
@@ -36,7 +37,7 @@ async fn main() {
     database::run_db_migrations(&db_pool)
         .await
         .unwrap_or_else(|e| {
-            tracing::error!("{}", e);
+            error!("{}", e);
             exit(1)
         });
 
@@ -51,6 +52,8 @@ async fn main() {
             tracing::error!("Invalid port number: {}", e);
             exit(1)
         });
+    debug!(port);
+
     let ip_addr = env::var("IP")
         .unwrap_or_else(|_| "0.0.0.0".to_string())
         .parse::<IpAddr>()
@@ -58,10 +61,12 @@ async fn main() {
             tracing::error!("Invalid IP address: {}", e);
             exit(1)
         });
+    debug!("ip_address={}", ip_addr.to_string());
+
     let router = routes::get_routes(state);
     let addr = SocketAddr::from((ip_addr, port));
 
-    tracing::info!("listening on {}", addr);
+    info!("Listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(
