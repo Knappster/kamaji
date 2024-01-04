@@ -46,7 +46,10 @@ async fn main() {
 
     // Configure routing and start listening for connections.
     let port = env::var("PORT")
-        .unwrap_or_else(|_| "80".to_string())
+        .unwrap_or_else(|e| {
+            debug!("PORT: {}", e);
+            "80".to_string()
+        })
         .parse::<u16>()
         .unwrap_or_else(|e| {
             tracing::error!("Invalid port number: {}", e);
@@ -55,7 +58,10 @@ async fn main() {
     debug!(port);
 
     let ip_addr = env::var("IP")
-        .unwrap_or_else(|_| "0.0.0.0".to_string())
+        .unwrap_or_else(|e| {
+            debug!("IP: {}", e);
+            "0.0.0.0".to_string()
+        })
         .parse::<IpAddr>()
         .unwrap_or_else(|e| {
             tracing::error!("Invalid IP address: {}", e);

@@ -8,9 +8,9 @@ services:
     image: knappster/kamaji
     environment:
       PORT: 80
-      CLIENT_ID: 
-      CLIENT_SECRET: 
-      DATABASE_URL: mysql://kamaji123:kamaji@db/kamaji
+      CLIENT_ID:
+      CLIENT_SECRET:
+      DATABASE_URL: mysql://kamaji:kamaji@db/kamaji
       ASSETS_PATH: /public
     ports:
-     - 80:80
+      - 80:80

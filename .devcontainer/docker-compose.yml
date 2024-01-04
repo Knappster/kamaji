@@ -1,12 +1,10 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file:
-        - ../.env
     volumes:
       - ../..:/workspaces:cached
     command: sleep infinity
@@ -16,8 +14,6 @@ services:
     restart: unless-stopped
     volumes:
       - mysql-data:/var/lib/mysql
-    env_file:
-        - ../.env
     environment:
       MARIADB_ROOT_PASSWORD: root
       MARIADB_DATABASE: kamaji

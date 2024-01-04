@@ -1,6 +1,6 @@
 use sqlx::MySqlPool;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AppState {
     pub database: MySqlPool,
 }
