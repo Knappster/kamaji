@@ -15,7 +15,6 @@ use crate::state::AppState;
 
 #[tokio::main]
 async fn main() {
-    // Configure environment variables.
     dotenv().ok();
 
     // Configure logging.
@@ -27,13 +26,13 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Create database connection.
+    info!("Creating database connection pool...");
     let db_pool = database::init_db_pool().await.unwrap_or_else(|e| {
         tracing::error!("{}", e);
         exit(1)
     });
 
-    // Run any migrations.
+    info!("Running database migrations...");
     database::run_db_migrations(&db_pool)
         .await
         .unwrap_or_else(|e| {
@@ -41,10 +40,9 @@ async fn main() {
             exit(1)
         });
 
-    // Create app state.
     let state = AppState { database: db_pool };
 
-    // Configure routing and start listening for connections.
+    info!("Configuring routes...");
     let port = env::var("PORT")
         .unwrap_or_else(|_| {
             debug!("PORT environment variable missing");
@@ -70,11 +68,11 @@ async fn main() {
     debug!("ip_address={}", ip_addr.to_string());
 
     let router = routes::get_routes(state);
+
+    info!("Starting HTTP server...");
     let addr = SocketAddr::from((ip_addr, port));
-
-    info!("Listening on {}", addr);
-
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    info!("Listening on {}", addr);
     axum::serve(
         listener,
         router.layer(TraceLayer::new_for_http()).into_make_service(),
