@@ -1,10 +1,13 @@
 use axum::extract::FromRef;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
-use crate::database::Database;
+use crate::{database::Database, events::Events};
 
 #[derive(Clone)]
 pub struct AppState {
     pub database: Database,
+    pub events: Arc<Mutex<Events>>,
 }
 
 impl FromRef<AppState> for Database {
@@ -17,6 +20,7 @@ impl Default for AppState {
     fn default() -> Self {
         AppState {
             database: Database::new(),
+            events: Arc::new(Mutex::new(Events::new())),
         }
     }
 }

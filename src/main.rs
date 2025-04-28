@@ -1,7 +1,10 @@
 mod database;
+//mod events;
+mod events;
 mod models;
 mod routes;
 mod schema;
+mod services;
 mod state;
 
 use axum::Router;
@@ -39,6 +42,21 @@ async fn main() {
         ..Default::default()
     };
 
+    // Log all events to console.
+    {
+        let mut events_receiver = state.events.lock().await.subscribe_all();
+
+        tokio::spawn(async move {
+            while let Ok(event) = events_receiver.recv().await {
+                tracing::info!(
+                    "Event triggered: {} with payload: {:?}",
+                    event.event_type,
+                    event.payload
+                );
+            }
+        });
+    }
+
     // Configure routing and start listening for connections.
     let port: u16 = env::var("PORT")
         .unwrap_or_else(|_| "25000".to_string())
@@ -48,13 +66,13 @@ async fn main() {
         .unwrap_or_else(|_| "0.0.0.0".to_string())
         .parse()
         .expect("IP address invalid.");
-    let router: Router = routes::get_router(state);
+    let router: Router = routes::routes().with_state(state);
     let addr: SocketAddr = SocketAddr::from((ip_addr, port));
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
-    tracing::info!("listening on {}", addr);
+    tracing::info!("Listening on {}", addr);
 
-    axum::Server::bind(&addr)
-        .serve(router.layer(TraceLayer::new_for_http()).into_make_service())
+    axum::serve(listener, router.layer(TraceLayer::new_for_http()))
         .await
         .unwrap();
 }
