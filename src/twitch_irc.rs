@@ -1,8 +1,10 @@
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
-use crate::{events::Event, state::AppState};
+use crate::{events::Event, state::State};
 
-pub async fn twitch_chat(state: AppState) -> anyhow::Result<()> {
+pub async fn start_twitch_irc(state: Arc<Mutex<State>>) -> anyhow::Result<()> {
     const CHANNELS: &[&str] = &["#kn4ppster"];
 
     let mut client = tmi::Client::anonymous().await?;
@@ -20,11 +22,11 @@ pub async fn twitch_chat(state: AppState) -> anyhow::Result<()> {
                         message.text()
                     );
 
+                    let state = state.lock().await.clone();
+
                     if message.text().starts_with("!") {
                         state
                             .events
-                            .lock()
-                            .await
                             .publish(Event {
                                 event_type: "chat.command".to_string(),
                                 payload: serde_json::json!({"message": message.text()}),

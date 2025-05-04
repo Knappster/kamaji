@@ -1,15 +1,15 @@
 use axum::Router;
 use tower_http::services::{ServeDir, ServeFile};
 
-use crate::state::AppState;
+use crate::state::State;
 
 pub mod api;
 
-pub fn routes() -> Router<AppState> {
+pub fn get_routes() -> Router<State> {
     let static_routes =
         ServeDir::new("assets").not_found_service(ServeFile::new("assets/index.html"));
 
     Router::new()
-        .nest("/api", api::routes())
+        .nest("/api", api::get_routes())
         .fallback_service(static_routes)
 }

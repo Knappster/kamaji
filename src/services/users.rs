@@ -4,7 +4,7 @@ use axum::{extract::State, http::StatusCode};
 use serde_json::Value;
 
 use crate::events::Event;
-use crate::state::AppState;
+use crate::state::State as AppState;
 
 pub async fn get_user(
     State(state): State<AppState>,
@@ -18,7 +18,7 @@ pub async fn get_user(
     };
 
     {
-        let _ = state.events.lock().await.publish(event).await;
+        let _ = state.events.publish(event).await;
     }
 
     Ok(Json(serde_json::json!({
@@ -29,8 +29,6 @@ pub async fn get_user(
 pub async fn test_one(State(state): State<AppState>) -> Result<(), StatusCode> {
     let _ = state
         .events
-        .lock()
-        .await
         .publish(Event {
             event_type: "test.one".to_string(),
             payload: serde_json::json!({"message": "test one success".to_string()}),
@@ -43,8 +41,6 @@ pub async fn test_one(State(state): State<AppState>) -> Result<(), StatusCode> {
 pub async fn test_two(State(state): State<AppState>) -> Result<(), StatusCode> {
     let _ = state
         .events
-        .lock()
-        .await
         .publish(Event {
             event_type: "test.two".to_string(),
             payload: serde_json::json!({"message": "test two success".to_string()}),

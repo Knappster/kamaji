@@ -1,19 +1,20 @@
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::sync::Mutex;
 
+use crate::config::Config;
 use crate::{database::Database, events::Events};
 
 #[derive(Clone)]
-pub struct AppState {
+pub struct State {
     pub database: Database,
-    pub events: Arc<Mutex<Events>>,
+    pub events: Events,
 }
 
-impl AppState {
-    pub async fn new() -> Self {
-        AppState {
-            database: Database::new().await,
-            events: Arc::new(Mutex::new(Events::new())),
+impl State {
+    pub async fn new(config: Arc<Mutex<Config>>) -> Self {
+        State {
+            database: Database::new(config).await,
+            events: Events::new(),
         }
     }
 }

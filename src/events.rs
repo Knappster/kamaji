@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
@@ -10,11 +11,13 @@ pub struct Event {
     pub payload: Value,
 }
 
+#[derive(Clone)]
 struct EventHandler {
     id: String,
-    handler: Box<dyn Fn(&Event) + Send + Sync + 'static>,
+    handler: Arc<dyn Fn(&Event) + Send + Sync + 'static>,
 }
 
+#[derive(Clone)]
 pub struct Events {
     broadcast: broadcast::Sender<Event>,
     handlers: HashMap<String, Vec<EventHandler>>,
@@ -56,7 +59,7 @@ impl Events {
 
         handlers.push(EventHandler {
             id: id.clone(),
-            handler: Box::new(handler),
+            handler: Arc::new(handler),
         });
 
         id
