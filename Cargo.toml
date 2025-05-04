@@ -3,15 +3,25 @@ name = "kamaji"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [".", "migration"]
+
 [dependencies]
-axum = { version = "0.8.3", features = ["tokio", "http2"] }
+anyhow = "1.0.98"
+axum = { version = "0.8.4", features = ["tokio", "http2"] }
 axum-extra = { version = "0.10.1" }
-deadpool-diesel = { version = "0.6.1", features = ["sqlite"] }
 default-env = "0.1.1"
-diesel = { version = "2.2.10", features = ["sqlite"] }
 dotenvy = "0.15.6"
+migration = { path = "migration" }
+sea-orm = { version = "1.1.10", features = [
+    "sqlx-sqlite",
+    "sqlx-mysql",
+    "runtime-tokio-rustls",
+    "debug-print",
+] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
+tmi = "0.9.0"
 tokio = { version = "1.44.2", features = ["full"] }
 tower = { version = "0.5.2", features = ["util"] }
 tower-http = { version = "0.6.2", features = ["fs", "trace"] }
@@ -21,6 +31,6 @@ uuid = { version = "1.16.0", features = ["v4"] }
 
 [profile.release]
 strip = true
-# opt-level = "z"
+opt-level = "z"
 lto = true
 codegen-units = 1

@@ -1,20 +1,48 @@
 mod database;
 //mod events;
 mod events;
-mod models;
 mod routes;
-mod schema;
 mod services;
 mod state;
+mod twitch_irc;
 
+use axum::serve::Listener;
 use axum::Router;
 use dotenvy::dotenv;
 use state::AppState;
 use std::env;
+use std::future::IntoFuture;
 use std::net::IpAddr;
 use std::net::SocketAddr;
+use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("Failed to install Ctrl+C handler!");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("Failed to install signal handler!")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    tracing::info!("Signal received, starting graceful shutdown!");
+}
 
 #[tokio::main]
 async fn main() {
@@ -38,24 +66,7 @@ async fn main() {
         .init();
 
     // Configure app state.
-    let state = AppState {
-        ..Default::default()
-    };
-
-    // Log all events to console.
-    {
-        let mut events_receiver = state.events.lock().await.subscribe_all();
-
-        tokio::spawn(async move {
-            while let Ok(event) = events_receiver.recv().await {
-                tracing::info!(
-                    "Event triggered: {} with payload: {:?}",
-                    event.event_type,
-                    event.payload
-                );
-            }
-        });
-    }
+    let state = AppState::new().await;
 
     // Configure routing and start listening for connections.
     let port: u16 = env::var("PORT")
@@ -66,13 +77,33 @@ async fn main() {
         .unwrap_or_else(|_| "0.0.0.0".to_string())
         .parse()
         .expect("IP address invalid.");
-    let router: Router = routes::routes().with_state(state);
+    let router: Router = routes::routes().with_state(state.clone());
     let addr: SocketAddr = SocketAddr::from((ip_addr, port));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
-    tracing::info!("Listening on {}", addr);
+    match tokio::net::TcpListener::bind(addr).await {
+        Ok(listener) => {
+            let axum_future = axum::serve(listener, router.layer(TraceLayer::new_for_http()))
+                .with_graceful_shutdown(shutdown_signal())
+                .into_future();
+            tracing::info!("Listening on {}", addr);
 
-    axum::serve(listener, router.layer(TraceLayer::new_for_http()))
-        .await
-        .unwrap();
+            let twitch_irc_future = twitch_irc::twitch_chat(state.clone());
+
+            tokio::select! {
+                res = axum_future => {
+                    if let Err(error) = res {
+                        tracing::error!("Axum failure: {:?}", error);
+                    }
+                },
+                res = twitch_irc_future => {
+                    if let Err(error) = res {
+                        tracing::error!("Twitch IRC failure: {:?}", error);
+                    }
+                }
+            }
+        }
+        Err(error) => {
+            tracing::error!("Failed to bind to port {:?}", error);
+        }
+    }
 }

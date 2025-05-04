@@ -1,4 +1,3 @@
-use axum::extract::FromRef;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -10,16 +9,10 @@ pub struct AppState {
     pub events: Arc<Mutex<Events>>,
 }
 
-impl FromRef<AppState> for Database {
-    fn from_ref(app_state: &AppState) -> Database {
-        app_state.database.clone()
-    }
-}
-
-impl Default for AppState {
-    fn default() -> Self {
+impl AppState {
+    pub async fn new() -> Self {
         AppState {
-            database: Database::new(),
+            database: Database::new().await,
             events: Arc::new(Mutex::new(Events::new())),
         }
     }

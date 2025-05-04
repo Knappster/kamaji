@@ -24,6 +24,19 @@ impl Events {
     pub fn new() -> Self {
         let (sender, _) = broadcast::channel::<Event>(1000);
 
+        // Log all events to console.
+        let mut receiver = sender.subscribe();
+
+        tokio::spawn(async move {
+            while let Ok(event) = receiver.recv().await {
+                tracing::info!(
+                    "Event triggered: {} with payload: {:?}",
+                    event.event_type,
+                    event.payload
+                );
+            }
+        });
+
         Self {
             broadcast: sender,
             handlers: HashMap::new(),
