@@ -1,6 +1,9 @@
-use dotenvy::dotenv;
 use std::env;
 use std::net::IpAddr;
+use std::sync::Arc;
+use std::sync::Mutex;
+
+pub type ConfigType = Arc<Mutex<Config>>;
 
 #[derive(Clone)]
 pub struct Config {
@@ -11,9 +14,6 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Self {
-        // Grab initial config from environment or .env file.
-        dotenv().ok();
-
         Config {
             ip_addr: env::var("IP")
                 .unwrap_or_else(|_| "0.0.0.0".to_string())

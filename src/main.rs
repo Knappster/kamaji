@@ -8,6 +8,7 @@ mod services;
 mod state;
 mod twitch_irc;
 
+use dotenvy::dotenv;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tokio::sync::Mutex as TokioMutex;
@@ -20,6 +21,9 @@ use crate::twitch_irc::start_twitch_irc;
 
 #[tokio::main]
 async fn main() {
+    // Grab initial config from environment or .env file.
+    dotenv().ok();
+
     /*
     #[cfg(debug_assertions)]
     {
@@ -33,12 +37,15 @@ async fn main() {
     init_logging();
 
     // Init config.
+    tracing::info!("Creating config.");
     let config = Arc::new(Mutex::new(Config::new()));
 
     // Configure app state.
+    tracing::info!("Creating state.");
     let state = Arc::new(TokioMutex::new(State::new(config.clone()).await));
 
     // Start services.
+    tracing::info!("Starting services.");
     let http_server_future = start_http_server(config.clone(), state.clone());
     let twitch_irc_future = start_twitch_irc(state.clone());
 
