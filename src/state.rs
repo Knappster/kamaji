@@ -1,8 +1,10 @@
 use std::sync::Arc;
-use std::sync::Mutex;
+use tokio::sync::Mutex;
 
-use crate::config::Config;
+use crate::config::ConfigType;
 use crate::{database::Database, events::Events};
+
+pub type StateType = Arc<Mutex<State>>;
 
 #[derive(Clone)]
 pub struct State {
@@ -11,7 +13,7 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(config: Arc<Mutex<Config>>) -> Self {
+    pub async fn new(config: ConfigType) -> Self {
         State {
             database: Database::new(config).await,
             events: Events::new(),

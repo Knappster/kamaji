@@ -18,7 +18,7 @@ pub async fn get_user(
     };
 
     {
-        let _ = state.events.publish(event).await;
+        state.events.publish(event).await;
     }
 
     Ok(Json(serde_json::json!({

@@ -1,19 +1,13 @@
 use axum::Router;
 use std::net::SocketAddr;
-use std::sync::Arc;
-use std::sync::Mutex;
 use tokio::signal;
-use tokio::sync::Mutex as TokioMutex;
 use tower_http::trace::TraceLayer;
 
-use crate::config::Config;
+use crate::config::ConfigType;
 use crate::routes::get_routes;
-use crate::state::State;
+use crate::state::StateType;
 
-pub async fn start_http_server(
-    config: Arc<Mutex<Config>>,
-    state: Arc<TokioMutex<State>>,
-) -> anyhow::Result<()> {
+pub async fn start_http_server(config: ConfigType, state: StateType) -> anyhow::Result<()> {
     let config = config.lock().unwrap();
     let state = state.lock().await.clone();
 
@@ -24,6 +18,7 @@ pub async fn start_http_server(
         .await
         .expect("Failed to bind to port!");
 
+    tracing::info!("Starting server.");
     tracing::info!("Listening on {}", addr);
 
     axum::serve(listener, router.layer(TraceLayer::new_for_http()))

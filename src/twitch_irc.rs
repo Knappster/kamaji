@@ -1,14 +1,16 @@
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
-use crate::{events::Event, state::State};
+use crate::{events::Event, state::StateType};
 
-pub async fn start_twitch_irc(state: Arc<Mutex<State>>) -> anyhow::Result<()> {
-    const CHANNELS: &[&str] = &["#kn4ppster"];
+pub async fn start_twitch_irc(state: StateType) -> anyhow::Result<()> {
+    let channel = "#kn4ppster";
+
+    tracing::info!("Starting IRC connection.");
 
     let mut client = tmi::Client::anonymous().await?;
-    client.join_all(CHANNELS).await?;
+    client.join(channel).await?;
+
+    tracing::info!("Joining channel: {}", channel);
 
     let handle: JoinHandle<anyhow::Result<()>> = tokio::spawn(async move {
         loop {
@@ -37,7 +39,7 @@ pub async fn start_twitch_irc(state: Arc<Mutex<State>>) -> anyhow::Result<()> {
                 tmi::Message::Reconnect => {
                     tracing::info!("Reconnecting!");
                     client.reconnect().await?;
-                    client.join_all(CHANNELS).await?;
+                    client.join(channel).await?;
                 }
                 tmi::Message::Ping(ping) => {
                     client.pong(&ping).await?;

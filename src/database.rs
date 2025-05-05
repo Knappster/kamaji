@@ -3,7 +3,7 @@ use sea_orm::{Database as SeaORMDatabase, DatabaseConnection};
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use crate::config::Config;
+use crate::config::ConfigType;
 
 #[derive(Clone)]
 pub struct Database {
@@ -11,7 +11,7 @@ pub struct Database {
 }
 
 impl Database {
-    pub async fn new(config: Arc<Mutex<Config>>) -> Self {
+    pub async fn new(config: ConfigType) -> Self {
         let connection = Self::create_connection(config).await;
         Migrator::up(&connection, None)
             .await
@@ -20,7 +20,7 @@ impl Database {
         Database { connection }
     }
 
-    async fn create_connection(config: Arc<Mutex<Config>>) -> DatabaseConnection {
+    async fn create_connection(config: ConfigType) -> DatabaseConnection {
         let config = config.lock().unwrap().clone();
         SeaORMDatabase::connect(config.database_url)
             .await
