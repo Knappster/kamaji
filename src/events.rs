@@ -32,7 +32,7 @@ impl Events {
 
         tokio::spawn(async move {
             while let Ok(event) = receiver.recv().await {
-                tracing::info!(
+                tracing::debug!(
                     "Event triggered: {} with payload: {:?}",
                     event.event_type,
                     event.payload
