@@ -3,7 +3,8 @@ use tower_http::services::{ServeDir, ServeFile};
 
 use crate::state::State;
 
-pub mod api;
+mod api;
+//mod oauth;
 
 pub fn get_routes() -> Router<State> {
     let static_routes =
@@ -11,5 +12,6 @@ pub fn get_routes() -> Router<State> {
 
     Router::new()
         .nest("/api", api::get_routes())
+        //.merge(oauth::get_routes())
         .fallback_service(static_routes)
 }
