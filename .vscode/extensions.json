@@ -4,6 +4,7 @@
         "fill-labs.dependi",
         "vadimcn.vscode-lldb",
         "tamasfe.even-better-toml",
-        "alexcvzz.vscode-sqlite"
+        "alexcvzz.vscode-sqlite",
+        "ms-azuretools.vscode-containers"
     ]
 }

@@ -1,27 +1,26 @@
+pub mod handlers;
+pub mod routes;
+
 use axum::Router;
 use std::net::SocketAddr;
 use tokio::signal;
-use tower_http::trace::TraceLayer;
 
 use crate::config::ConfigType;
-use crate::routes::get_routes;
 use crate::state::StateType;
+use routes::*;
 
-pub async fn start_http_server(config: ConfigType, state: StateType) -> anyhow::Result<()> {
+pub async fn http_serve(config: ConfigType, state: StateType) -> anyhow::Result<()> {
     let config = config.lock().unwrap();
     let state = state.lock().await.clone();
 
-    let router: Router = get_routes().with_state(state);
+    let router: Router = routes(config.clone()).with_state(state);
     let addr: SocketAddr = SocketAddr::from((config.ip_addr, config.port));
 
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .expect("Failed to bind to port!");
+    let listener = tokio::net::TcpListener::bind(addr).await?;
 
-    tracing::info!("Starting server.");
     tracing::info!("Listening on {}", addr);
 
-    axum::serve(listener, router.layer(TraceLayer::new_for_http()))
+    axum::serve(listener, router)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
 
@@ -50,6 +49,4 @@ async fn shutdown_signal() {
         _ = ctrl_c => {},
         _ = terminate => {},
     }
-
-    tracing::info!("Signal received, starting graceful shutdown!");
 }

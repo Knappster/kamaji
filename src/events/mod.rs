@@ -1,9 +1,49 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter, Result};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use uuid::Uuid;
+
+#[derive(Clone)]
+struct Handler {
+    handler: Arc<dyn Fn(&Event) + Send + Sync + 'static>,
+    name: Option<String>,
+}
+
+impl Debug for Handler {
+    fn fmt(&self, fmt: &mut Formatter<'_>) -> Result {
+        let mut debug_struct = fmt.debug_struct("Handler");
+        if let Some(name) = &self.name {
+            debug_struct.field("name", name);
+        }
+        debug_struct.finish_non_exhaustive()
+    }
+}
+
+impl<F> From<F> for Handler
+where
+    F: Fn(&Event) + Send + Sync + 'static + 'static,
+{
+    fn from(f: F) -> Self {
+        Handler {
+            handler: Arc::new(f),
+            name: None,
+        }
+    }
+}
+
+impl Handler {
+    pub fn set_name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn call(&self, event: &Event) {
+        (self.handler)(event)
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Event {
@@ -11,13 +51,13 @@ pub struct Event {
     pub payload: Value,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct EventHandler {
     id: String,
-    handler: Arc<dyn Fn(&Event) + Send + Sync + 'static>,
+    handler: Handler,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Events {
     broadcast: broadcast::Sender<Event>,
     handlers: HashMap<String, Vec<EventHandler>>,
@@ -26,8 +66,6 @@ pub struct Events {
 impl Events {
     pub fn new() -> Self {
         let (sender, _) = broadcast::channel::<Event>(1000);
-
-        // Log all events to console.
         let mut receiver = sender.subscribe();
 
         tokio::spawn(async move {
@@ -59,7 +97,7 @@ impl Events {
 
         handlers.push(EventHandler {
             id: id.clone(),
-            handler: Arc::new(handler),
+            handler: Handler::from(handler),
         });
 
         id
@@ -80,7 +118,7 @@ impl Events {
         // Then, invoke direct handlers.
         if let Some(handlers) = self.handlers.get(&event.event_type) {
             for entry in handlers {
-                (entry.handler)(&event);
+                entry.handler.call(&event);
             }
         }
     }

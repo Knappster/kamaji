@@ -6,7 +6,7 @@ use crate::{database::Database, events::Events};
 
 pub type StateType = Arc<Mutex<State>>;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct State {
     pub database: Database,
     pub events: Events,

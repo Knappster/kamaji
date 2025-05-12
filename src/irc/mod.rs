@@ -2,10 +2,9 @@ use tokio::task::JoinHandle;
 
 use crate::{events::Event, state::StateType};
 
-pub async fn start_twitch_irc(state: StateType) -> anyhow::Result<()> {
+pub async fn irc_connect(state: StateType) -> anyhow::Result<()> {
+    // TODO: Use channel name from Twitch users API.
     let channel = "#kn4ppster";
-
-    tracing::info!("Starting IRC connection.");
 
     let mut client = tmi::Client::anonymous().await?;
     client.join(channel).await?;

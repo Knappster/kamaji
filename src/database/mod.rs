@@ -1,11 +1,9 @@
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database as SeaORMDatabase, DatabaseConnection};
-use std::sync::Arc;
-use std::sync::Mutex;
 
 use crate::config::ConfigType;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Database {
     connection: DatabaseConnection,
 }
