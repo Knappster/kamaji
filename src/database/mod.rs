@@ -19,7 +19,7 @@ impl Database {
     }
 
     async fn create_connection(config: ConfigType) -> DatabaseConnection {
-        let config = config.lock().unwrap().clone();
+        let config = config.lock().await.clone();
         SeaORMDatabase::connect(config.database_url)
             .await
             .expect("Database connection failed!")

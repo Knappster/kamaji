@@ -6,11 +6,12 @@ use std::net::SocketAddr;
 use tokio::signal;
 
 use crate::config::ConfigType;
+use crate::error::*;
 use crate::state::StateType;
 use routes::*;
 
-pub async fn http_serve(config: ConfigType, state: StateType) -> anyhow::Result<()> {
-    let config = config.lock().unwrap();
+pub async fn http_serve(config: ConfigType, state: StateType) -> Result<(), AppError> {
+    let config = config.lock().await.clone();
     let state = state.lock().await.clone();
 
     let router: Router = routes(config.clone()).with_state(state);

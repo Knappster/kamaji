@@ -1,17 +1,22 @@
+pub mod error;
+
+use error::IrcError;
 use tokio::task::JoinHandle;
 
-use crate::{events::Event, state::StateType};
+use crate::{config::ConfigType, events::Event, state::StateType};
 
-pub async fn irc_connect(state: StateType) -> anyhow::Result<()> {
+pub async fn irc_connect(config: ConfigType, state: StateType) -> Result<(), IrcError> {
+    let config = config.lock().await.clone();
+
     // TODO: Use channel name from Twitch users API.
-    let channel = "#kn4ppster";
+    let channel = "#".to_owned() + &config.irc_channel;
+
+    tracing::info!("Joining channel: {}", channel.clone());
 
     let mut client = tmi::Client::anonymous().await?;
-    client.join(channel).await?;
+    client.join(channel.clone()).await?;
 
-    tracing::info!("Joining channel: {}", channel);
-
-    let handle: JoinHandle<anyhow::Result<()>> = tokio::spawn(async move {
+    let handle: JoinHandle<Result<(), IrcError>> = tokio::spawn(async move {
         loop {
             let message = client.recv().await?;
             match message.as_typed()? {
@@ -38,7 +43,7 @@ pub async fn irc_connect(state: StateType) -> anyhow::Result<()> {
                 tmi::Message::Reconnect => {
                     tracing::info!("Reconnecting!");
                     client.reconnect().await?;
-                    client.join(channel).await?;
+                    client.join(channel.clone()).await?;
                 }
                 tmi::Message::Ping(ping) => {
                     client.pong(&ping).await?;

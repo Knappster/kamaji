@@ -1,11 +1,11 @@
+mod api;
+mod assets;
+//mod oauth;
+
 use axum::Router;
 
 use crate::config::Config;
 use crate::state::State;
-
-mod api;
-mod assets;
-//mod oauth;
 
 pub fn routes(config: Config) -> Router<State> {
     Router::new()
