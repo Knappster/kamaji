@@ -1,3 +1,6 @@
+pub mod error;
+
+use error::DatabaseError;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database as SeaORMDatabase, DatabaseConnection};
 
@@ -9,20 +12,16 @@ pub struct Database {
 }
 
 impl Database {
-    pub async fn new(config: ConfigType) -> Self {
-        let connection = Self::create_connection(config).await;
-        Migrator::up(&connection, None)
-            .await
-            .expect("Migrations failed!");
+    pub async fn new(config: ConfigType) -> Result<Self, DatabaseError> {
+        let connection = Self::create_connection(config).await?;
+        Migrator::up(&connection, None).await?;
 
-        Database { connection }
+        Ok(Database { connection })
     }
 
-    async fn create_connection(config: ConfigType) -> DatabaseConnection {
+    async fn create_connection(config: ConfigType) -> Result<DatabaseConnection, DatabaseError> {
         let config = config.lock().await.clone();
-        SeaORMDatabase::connect(config.database_url)
-            .await
-            .expect("Database connection failed!")
+        Ok(SeaORMDatabase::connect(config.database_url).await?)
     }
 
     pub async fn get_connection(&self) -> DatabaseConnection {

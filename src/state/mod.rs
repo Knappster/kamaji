@@ -1,3 +1,6 @@
+pub mod error;
+
+use error::StateError;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -13,10 +16,10 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(config: ConfigType) -> Self {
-        State {
-            database: Database::new(config).await,
-            events: Events::new(),
-        }
+    pub async fn new(config: ConfigType) -> Result<Self, StateError> {
+        Ok(State {
+            database: Database::new(config).await?,
+            events: Events::new()?,
+        })
     }
 }

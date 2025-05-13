@@ -1,16 +1,17 @@
+pub mod error;
 pub mod handlers;
-pub mod routes;
+mod routes;
 
 use axum::Router;
+use error::HttpError;
 use std::net::SocketAddr;
 use tokio::signal;
 
 use crate::config::ConfigType;
-use crate::error::*;
 use crate::state::StateType;
 use routes::*;
 
-pub async fn http_serve(config: ConfigType, state: StateType) -> Result<(), AppError> {
+pub async fn http_serve(config: ConfigType, state: StateType) -> Result<(), HttpError> {
     let config = config.lock().await.clone();
     let state = state.lock().await.clone();
 

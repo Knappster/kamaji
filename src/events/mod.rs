@@ -1,7 +1,10 @@
+pub mod error;
+
+use error::EventsError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter, Result};
+use std::fmt::{Debug, Formatter, Result as ResultType};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use uuid::Uuid;
@@ -13,7 +16,7 @@ struct Handler {
 }
 
 impl Debug for Handler {
-    fn fmt(&self, fmt: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, fmt: &mut Formatter<'_>) -> ResultType {
         let mut debug_struct = fmt.debug_struct("Handler");
         if let Some(name) = &self.name {
             debug_struct.field("name", name);
@@ -64,7 +67,7 @@ pub struct Events {
 }
 
 impl Events {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, EventsError> {
         let (sender, _) = broadcast::channel::<Event>(1000);
         let mut receiver = sender.subscribe();
 
@@ -78,10 +81,10 @@ impl Events {
             }
         });
 
-        Self {
+        Ok(Self {
             broadcast: sender,
             handlers: HashMap::new(),
-        }
+        })
     }
 
     pub fn subscribe<F>(&mut self, event_type: &str, handler: F) -> String

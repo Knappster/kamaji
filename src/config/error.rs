@@ -5,11 +5,11 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ConfigError {
-    #[error("ip address parsing error: {0}")]
+    #[error("ip_address_parsing::{0}")]
     IpAddressError(#[from] AddrParseError),
-    #[error("port parsing error: {0}")]
+    #[error("port_parsing::{0}")]
     PortError(#[from] ParseIntError),
-    #[error("environment variable error for {field}: {source}")]
+    #[error("environment_variable::{field}:{source}")]
     EnvVarError {
         field: String,
         #[source]
