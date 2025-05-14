@@ -7,16 +7,16 @@ use tokio::task::JoinError;
 
 #[derive(Error, Debug)]
 pub enum IrcError {
-    #[error("connection::{0}")]
+    #[error("connection: {0}")]
     Connection(#[from] ConnectError),
-    #[error("send::{0}")]
+    #[error("send: {0}")]
     Send(#[from] SendError),
-    #[error("join::{0}")]
+    #[error("join: {0}")]
     Join(#[from] JoinError),
-    #[error("receive::{0}")]
+    #[error("receive: {0}")]
     Receiver(#[from] RecvError),
-    #[error("message_parsing::{0}")]
+    #[error("message_parsing: {0}")]
     MessageParsing(#[from] MessageParseError),
-    #[error("reconnect::{0}")]
+    #[error("reconnect: {0}")]
     Reconnect(#[from] ReconnectError),
 }
