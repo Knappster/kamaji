@@ -1,6 +1,5 @@
 pub mod error;
 
-use error::EventsError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -8,6 +7,8 @@ use std::fmt::{Debug, Formatter, Result as ResultType};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use uuid::Uuid;
+
+use error::EventsError;
 
 #[derive(Clone)]
 struct Handler {

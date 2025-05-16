@@ -1,17 +1,17 @@
 pub mod error;
 
-use error::IrcError;
 use tokio::task::JoinHandle;
 
-use crate::{config::ConfigType, events::Event, state::StateType};
+use crate::{events::Event, state::State};
+use error::IrcError;
 
-pub async fn irc_connect(config: ConfigType, state: StateType) -> Result<(), IrcError> {
-    let config = config.lock().await.clone();
+pub async fn irc_connect(state: State) -> Result<(), IrcError> {
+    let config = state.config.clone();
 
     // TODO: Use channel name from Twitch users API.
     let channel = "#".to_owned() + &config.irc_channel;
 
-    tracing::info!("Joining channel: {}", channel.clone());
+    tracing::info!("joining channel: {}", channel.clone());
 
     let mut client = tmi::Client::anonymous().await?;
     client.join(channel.clone()).await?;
@@ -22,17 +22,17 @@ pub async fn irc_connect(config: ConfigType, state: StateType) -> Result<(), Irc
             match message.as_typed()? {
                 tmi::Message::Privmsg(message) => {
                     tracing::info!(
-                        "Message ({}): {} - {}",
+                        "message ({}): {} - {}",
                         message.channel(),
                         message.sender().name(),
                         message.text()
                     );
 
-                    let state = state.lock().await.clone();
-
                     if message.text().starts_with("!") {
                         state
                             .events
+                            .lock()
+                            .await
                             .publish(Event {
                                 event_type: "chat.command".to_string(),
                                 payload: serde_json::json!({"message": message.text()}),
@@ -41,7 +41,7 @@ pub async fn irc_connect(config: ConfigType, state: StateType) -> Result<(), Irc
                     }
                 }
                 tmi::Message::Reconnect => {
-                    tracing::info!("Reconnecting!");
+                    tracing::info!("reconnecting");
                     client.reconnect().await?;
                     client.join(channel.clone()).await?;
                 }

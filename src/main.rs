@@ -7,11 +7,8 @@ mod irc;
 mod state;
 
 use dotenvy::dotenv;
-use std::sync::Arc;
-use tokio::sync::Mutex as TokioMutex;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-use crate::config::*;
 use crate::error::*;
 use crate::http::*;
 use crate::irc::*;
@@ -28,6 +25,9 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    tracing::info!("kamaji started: v{}", VERSION);
+
     if let Err(error) = run().await {
         tracing::error!("{}", error);
         tracing::debug!("{:?}", error);
@@ -35,15 +35,12 @@ async fn main() {
 }
 
 async fn run() -> Result<(), AppError> {
-    // Init config.
-    let config = Arc::new(TokioMutex::new(Config::new()?));
-
-    // Configure app state.
-    let state = Arc::new(TokioMutex::new(State::new(config.clone()).await?));
+    // Create default app state.
+    let state = State::new().await?;
 
     // Start services.
-    let http = http_serve(config.clone(), state.clone());
-    let twitch_irc = irc_connect(config.clone(), state.clone());
+    let http = http_serve(state.clone());
+    let twitch_irc = irc_connect(state.clone());
 
     tokio::select! {
         result = http => result.map_err(AppError::from),

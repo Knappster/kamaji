@@ -2,17 +2,19 @@
 name = "kamaji"
 version = "0.1.0"
 edition = "2021"
+authors = ["Carl Knapp <kn4ppster@gmail.com>"]
 
 [workspace]
 members = [".", "migration"]
 
 [dependencies]
 anyhow = "1.0.98"
-axum = { version = "0.8.4", features = ["tokio", "http2"] }
+axum = { version = "0.8.4", features = ["tokio", "http2", "macros"] }
 axum-extra = { version = "0.10.1" }
 default-env = "0.1.1"
 dotenvy = "0.15.6"
 migration = { path = "migration" }
+oauth2 = "5.0.0"
 sea-orm = { version = "1.1.11", features = [
     "sqlx-sqlite",
     "sqlx-mysql",
@@ -35,3 +37,4 @@ strip = true
 opt-level = "z"
 lto = true
 codegen-units = 1
+panic = "abort"

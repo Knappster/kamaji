@@ -1,25 +1,30 @@
 pub mod error;
 
+use axum::extract::FromRef;
 use error::StateError;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::config::ConfigType;
+use crate::config::Config;
 use crate::{database::Database, events::Events};
 
-pub type StateType = Arc<Mutex<State>>;
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, FromRef)]
 pub struct State {
-    pub database: Database,
-    pub events: Events,
+    pub config: Arc<Config>,
+    pub database: Arc<Database>,
+    pub events: Arc<Mutex<Events>>,
 }
 
 impl State {
-    pub async fn new(config: ConfigType) -> Result<Self, StateError> {
+    pub async fn new() -> Result<Self, StateError> {
+        let config = Arc::new(Config::new()?);
+        let database = Arc::new(Database::new(config.clone()).await?);
+        let events = Arc::new(Mutex::new(Events::new()?));
+
         Ok(State {
-            database: Database::new(config).await?,
-            events: Events::new()?,
+            config,
+            database,
+            events,
         })
     }
 }

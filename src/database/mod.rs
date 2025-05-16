@@ -1,10 +1,11 @@
 pub mod error;
 
-use error::DatabaseError;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database as SeaORMDatabase, DatabaseConnection};
+use std::sync::Arc;
 
-use crate::config::ConfigType;
+use crate::config::Config;
+use error::DatabaseError;
 
 #[derive(Debug, Clone)]
 pub struct Database {
@@ -12,16 +13,15 @@ pub struct Database {
 }
 
 impl Database {
-    pub async fn new(config: ConfigType) -> Result<Self, DatabaseError> {
+    pub async fn new(config: Arc<Config>) -> Result<Self, DatabaseError> {
         let connection = Self::create_connection(config).await?;
         Migrator::up(&connection, None).await?;
 
         Ok(Database { connection })
     }
 
-    async fn create_connection(config: ConfigType) -> Result<DatabaseConnection, DatabaseError> {
-        let config = config.lock().await.clone();
-        Ok(SeaORMDatabase::connect(config.database_url).await?)
+    async fn create_connection(config: Arc<Config>) -> Result<DatabaseConnection, DatabaseError> {
+        Ok(SeaORMDatabase::connect(config.database_url.clone()).await?)
     }
 
     pub async fn get_connection(&self) -> DatabaseConnection {

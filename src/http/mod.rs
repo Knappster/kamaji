@@ -1,26 +1,24 @@
 pub mod error;
-pub mod handlers;
 mod routes;
+pub mod services;
 
 use axum::Router;
-use error::HttpError;
 use std::net::SocketAddr;
 use tokio::signal;
 
-use crate::config::ConfigType;
-use crate::state::StateType;
+use crate::State;
+use error::HttpError;
 use routes::*;
 
-pub async fn http_serve(config: ConfigType, state: StateType) -> Result<(), HttpError> {
-    let config = config.lock().await.clone();
-    let state = state.lock().await.clone();
+pub async fn http_serve(state: State) -> Result<(), HttpError> {
+    let config = state.config.clone();
 
     let router: Router = routes(config.clone()).with_state(state);
     let addr: SocketAddr = SocketAddr::from((config.ip_addr, config.port));
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
-    tracing::info!("Listening on {}", addr);
+    tracing::info!("listening on {}", addr);
 
     axum::serve(listener, router)
         .with_graceful_shutdown(shutdown_signal())
